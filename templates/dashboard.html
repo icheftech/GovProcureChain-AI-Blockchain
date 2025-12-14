@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GovProcureChain - Blockchain Orchestrator Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .validity-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1em;
+        }
+        .validity-badge.valid {
+            background: #4ade80;
+            color: white;
+        }
+        .validity-badge.invalid {
+            background: #ef4444;
+            color: white;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .blocks-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .block {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .block:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .block-index {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .block-timestamp {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .hash-display {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #374151;
+            margin: 5px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .events-list {
+            margin-top: 15px;
+        }
+        .event {
+            background: #f9fafb;
+            padding: 12px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .event-type {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .event-actor {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .event-payload {
+            background: white;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            color: #374151;
+            font-family: 'Courier New', monospace;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 GovProcureChain Orchestrator</h1>
+            <p class="subtitle">Real-time Blockchain Monitoring Dashboard</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Blocks</div>
+                <div class="stat-value" id="totalBlocks">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Events</div>
+                <div class="stat-value" id="totalEvents">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Chain Status</div>
+                <div id="chainStatus" class="stat-value">-</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="refreshData()">�� Refresh</button>
+            <button onclick="simulateProcurement()">⚡ Simulate Procurement</button>
+            <span style="margin-left: auto; color: #666;">Auto-refresh every 3 seconds</span>
+        </div>
+
+        <div class="blocks-container">
+            <h2 style="margin-bottom: 20px; color: #374151;">Blockchain Ledger</h2>
+            <div id="blocksDisplay" class="loading pulse">Loading blockchain data...</div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval;
+
+        async function refreshData() {
+            try {
+                // Fetch blockchain data
+                const response = await fetch('/api/blockchain');
+                const data = await response.json();
+                
+                // Fetch stats
+                const statsResponse = await fetch('/api/stats');
+                const stats = await statsResponse.json();
+
+                // Update stats
+                document.getElementById('totalBlocks').textContent = stats.total_blocks;
+                document.getElementById('totalEvents').textContent = stats.total_events;
+                
+                const statusEl = document.getElementById('chainStatus');
+                if (stats.is_valid) {
+                    statusEl.innerHTML = '<span class="validity-badge valid">✓ VALID</span>';
+                } else {
+                    statusEl.innerHTML = '<span class="validity-badge invalid">✗ INVALID</span>';
+                }
+
+                // Display blocks
+                const blocksDisplay = document.getElementById('blocksDisplay');
+                if (data.blocks.length === 0) {
+                    blocksDisplay.innerHTML = '<p class="loading">No blocks found</p>';
+                    return;
+                }
+
+                blocksDisplay.innerHTML = data.blocks.reverse().map(block => `
+                    <div class="block">
+                        <div class="block-header">
+                            <div>
+                                <span class="block-index">Block #${block.index}</span>
+                                ${block.index === 0 ? ' <span style="background: #fbbf24; padding: 4px 12px; border-radius: 12px; font-size: 0.7em; color: white;">GENESIS</span>' : ''}
+                            </div>
+                            <div class="block-timestamp">${new Date(block.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <strong>Hash:</strong>
+                            <div class="hash-display">${block.hash}</div>
+                        </div>
+                        <div>
+                            <strong>Previous Hash:</strong>
+                            <div class="hash-display">${block.previous_hash}</div>
+                        </div>
+                        <div class="events-list">
+                            <strong>Events (${block.event_count}):</strong>
+                            ${block.events.map(event => `
+                                <div class="event">
+                                    <div class="event-type">${event.event_type}</div>
+                                    <div class="event-actor">Actor: ${event.actor_role} (${event.actor_id})</div>
+                                    <div class="event-payload">${JSON.stringify(event.payload, null, 2)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('blocksDisplay').innerHTML = 
+                    '<p class="loading" style="color: #ef4444;">Error loading blockchain data</p>';
+            }
+        }
+
+        async function simulateProcurement() {
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = '⏳ Simulating...';
+
+                const response = await fetch('/api/simulate', { method: 'POST' });
+                const result = await response.json();
+
+                button.textContent = '✓ Complete!';
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = '⚡ Simulate Procurement';
+                }, 2000);
+
+                refreshData();
+            } catch (error) {
+                console.error('Error simulating procurement:', error);
+                alert('Error simulating procurement');
+            }
+        }
+
+        // Initial load
+        refreshData();
+
+        // Auto-refresh every 3 seconds
+        autoRefreshInterval = setInterval(refreshData, 3000);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(autoRefreshInterval);
+        });
+    </script>
+</body>
+</html>
