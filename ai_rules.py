@@ -98,30 +98,31 @@ def choose_winner(
     solicitation: Solicitation,
     bids: List[Bid],
     vendors_by_id: Dict[str, Vendor],
+    risk_threshold: int = 40,
 ) -> Tuple[Bid, RiskResult]:
     """
-    Simple winner logic:
+    Winner logic (more realistic):
     - Only consider bids that pass compliance gates
-    - Among compliant bids, choose lowest price
-    - Return winner + its risk evaluation (for audit trace)
-
-    In real procurement, evaluation is multi-factor (technical, price realism, past performance).
+    - Filter out bids above the risk threshold (automatic award blocked)
+    - Choose lowest price among remaining bids
     """
     peer_prices = [b.price_total for b in bids]
-    scored: List[Tuple[Bid, RiskResult]] = []
 
+    scored: List[Tuple[Bid, RiskResult]] = []
     for b in bids:
         v = vendors_by_id[b.vendor_id]
         res = evaluate_bid_rules(solicitation, b, v, peer_prices)
         scored.append((b, res))
 
     compliant = [(b, r) for (b, r) in scored if r.compliance_pass]
-
     if not compliant:
-        # Fallback: choose lowest risk among all, but flag that none were compliant.
-        # For assignment clarity, we'll raise.
         raise ValueError("No compliant bids available. Manual contracting officer review required.")
 
-    # Choose lowest price among compliant bids (simple)
-    compliant.sort(key=lambda x: x[0].price_total)
-    return compliant[0]
+    low_risk = [(b, r) for (b, r) in compliant if r.risk_score <= risk_threshold]
+    if not low_risk:
+        raise ValueError(
+            f"No compliant bids under risk threshold ({risk_threshold}). Manual review required."
+        )
+
+    low_risk.sort(key=lambda x: x[0].price_total)
+    return low_risk[0]
